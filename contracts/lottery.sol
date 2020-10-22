@@ -16,14 +16,14 @@ contract Lottery {
     }
     function random() private view returns (uint) {
         bytes memory val;
-        val = abi.encodePacked(block.difficulty, now, players);
+        val = abi.encodePacked(block.difficulty, block.timestamp, players);
         return uint (keccak256(val));
     }
     function pickWinner() public checkForOnlyManager {
         uint index = random() % players.length;
         //address payable winner;
         winner = payable (players[index]);
-        winner.transfer(address(this).balance);
+        winner.transfer(address(this).balance); //transfer ether from contract account to the winner
         //clear array for next round
         players = new address[](0); 
     } 
@@ -31,7 +31,6 @@ contract Lottery {
         require (msg.sender == manager);
         _;  
     }
-    
     function getPlayers() public view returns (address[] memory) {
         return players;
     }

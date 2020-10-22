@@ -1,0 +1,138 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+      const address = '0x8966B3BA0a401fc437E3AbBCC516a70d263Ba316'
+      const web3 = new Web3(Web3.givenProvider);
+      window.addEventListener('load', async () => {
+        if(typeof(web3) === 'undefined') {
+          //return console.log("Metamask is not installed");
+          alert("Metamask is not installed, you cannot use this app")
+        }
+        else {
+          window.ethereum.enable();
+        }
+  
+      });
+      const abi = [
+        { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+        {
+          inputs: [],
+          name: "enter",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getPlayers",
+          outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "manager",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "pickWinner",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          name: "players",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "winner",
+          outputs: [
+            { internalType: "address payable", name: "", type: "address" },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ];
+
+      const lotteryContract = new web3.eth.Contract(abi, address);
+      var manager;
+      var player;
+      var prize;
+      var amount;
+      var winner;
+      getManagerAddress = async () => {
+        manager = await lotteryContract.methods.manager().call();
+        document.getElementById("manager").innerHTML = "Manager is: " + manager;
+      };
+      getNoOfPlayer = async () => {
+        player = await lotteryContract.methods.getPlayers().call();
+        document.getElementById("player").innerHTML = "There are " + player.length + " people entering the system";
+      };
+      getPrize = async() => {
+        prize = await web3.eth.getBalance(lotteryContract.options.address)
+        document.getElementById("prize").innerHTML = "The winner will get " + web3.utils.fromWei(prize, "ether") + " ether";
+      };
+      enter = async () => {
+        amount = document.getElementById("amount").value;
+        const accounts = await web3.eth.getAccounts();
+        document.getElementById("status").innerHTML = "please wait for processing your request";
+        
+        await lotteryContract.methods.enter().send({
+          from: accounts[0],
+          value: web3.utils.toWei(amount, "ether"),
+          gas: 400000
+        });
+
+        document.getElementById("status").innerHTML = "transaction confirmed";
+      };
+      pickWinner = async () => {
+        const accounts = await web3.eth.getAccounts();
+        document.getElementById("winner").innerHTML = "please wait for processing your request";
+
+        await lotteryContract.methods.pickWinner().send({
+          from: accounts[0]
+        });
+
+        winner = await lotteryContract.methods.winner().call();
+        document.getElementById("winner").innerHTML = "the winner is " + winner;
+      };
+</script>
+  </head>
+  <body>
+    <h2>Lottery Contract</h2>
+    <script>
+      getManagerAddress();
+      getNoOfPlayer();
+      getPrize();
+    </script>
+    <div id="manager"></div>
+    <br/>
+    <div id="player"></div>
+    <br/>
+    <div id="prize"></div>
+
+    <hr>
+
+    <b>Wanna Play?</b>
+    <br/>
+    <label>How much ether do you want to enter? (>=0.01 ether)</label>
+    <input type="text" id="amount"></input>
+    <button type="button" onclick="enter()">Enter</button>
+    <div id="status"></div>
+
+    <hr>
+
+    <b>Ready to pick a winner?</b>
+    <br/>
+    <button type="button" onclick="pickWinner()">Pick the winner</button>
+    <div id="winner"></div>
+  </body>
+</html>
